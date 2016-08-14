@@ -16,12 +16,12 @@ export interface VNodeData {
 }
 
 export interface VNode {
-  sel: string;
-  data?: VNodeData;
-  children?: Array<VNode | string>;
-  elm?: Element | Text;
-  text?: string;
-  key?: string | number;
+  sel: string | undefined;
+  data?: VNodeData | undefined;
+  children?: Array<VNode | string> | undefined;
+  elm?: HTMLElement | Text | undefined;
+  text?: string | undefined;
+  key?: string | number | undefined;
 }
 
 export interface ThunkData extends VNodeData {
@@ -67,8 +67,8 @@ export interface Module {
 }
 
 export interface SnabbdomAPI<T> {
-  createElement(tagName: string): T;
-  createElementNS(namespaceURI: string, qualifiedName: string): T;
+  createHTMLElement(tagName: string): T;
+  createHTMLElementNS(namespaceURI: string, qualifiedName: string): T;
   createTextNode(text: string): T;
   insertBefore(parentNode: T, newNode: T, referenceNode: T): void;
   removeChild(node: T, child: T): void;
@@ -76,7 +76,28 @@ export interface SnabbdomAPI<T> {
   parentNode(node: T): T;
   nextSibling(node: T): T;
   tagName(node: T): string;
-  setTextContent(node: T, text: string): void;
+  setTextCtent(node: T, text: string): void;
+}
+
+export interface HyperscriptFn {
+  (sel: string): VNode
+  (sel: string, data: VNodeData): VNode
+  (sel: string, children: Array<string | VNode>): VNode
+  (sel: string, data: VNodeData, children: Array<string | VNode>): VNode
+}
+
+export interface ThunkFn {
+  <T1>(selector: string, key: string | number, render: (state1: T1) => VNode, state: T1): Thunk
+  <T1, T2>(selector: string, key: string | number, render: (state1: T1, state2: T2) => VNode, state: T1, state2: T2): Thunk
+  <T1, T2, T3>(selector: string, key: string | number, render: (state1: T1, state2: T2, state3: T3) => VNode, state: T1, state2: T2, state3: T3): Thunk
+  <T1, T2, T3, T4>(selector: string, key: string | number, render: (state1: T1, state2: T2, state3: T3, state4: T4) => VNode, state: T1, state2: T2, state3: T3, state4: T4): Thunk
+  <T1, T2, T3, T4, T5>(selector: string, key: string | number, render: (state1: T1, state2: T2, state3: T3, state4: T4, state5: T5) => VNode, state: T1, state2: T2, state3: T3, state4: T4, state5: T5): Thunk
+  <T1, T2, T3, T4, T5, T6>(selector: string, key: string | number, render: (state1: T1, state2: T2, state3: T3, state4: T4, state5: T5, state6: T6) => VNode, state: T1, state2: T2, state3: T3, state4: T4, state5: T5, state6: T6): Thunk
+  <T1, T2, T3, T4, T5, T6, T7>(selector: string, key: string | number, render: (state1: T1, state2: T2, state3: T3, state4: T4, state5: T5, state6: T6, state7: T7) => VNode, state: T1, state2: T2, state3: T3, state4: T4, state5: T5, state6: T6, state7: T7): Thunk
+  <T1, T2, T3, T4, T5, T6, T7, T8>(selector: string, key: string | number, render: (state1: T1, state2: T2, state3: T3, state4: T4, state5: T5, state6: T6, state7: T7, state8: T8) => VNode, state: T1, state2: T2, state3: T3, state4: T4, state5: T5, state6: T6, state7: T7, state8: T8): Thunk
+  <T1, T2, T3, T4, T5, T6, T7, T8, T9>(selector: string, key: string | number, render: (state1: T1, state2: T2, state3: T3, state4: T4, state5: T5, state6: T6, state7: T7, state8: T8, state9: T9) => VNode, state: T1, state2: T2, state3: T3, state4: T4, state5: T5, state6: T6, state7: T7, state8: T8, state9: T9): Thunk
+  <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(selector: string, key: string | number, render: (state1: T1, state2: T2, state3: T3, state4: T4, state5: T5, state6: T6, state7: T7, state8: T8, state9: T9, state10: T10) => VNode, state: T1, state2: T2, state3: T3, state4: T4, state5: T5, state6: T6, state7: T7, state8: T8, state9: T9, state10: T10): Thunk
+  (selector: string, key: string | number, render: (...state: any[]) => VNode, ...state: any[]): Thunk
 }
 
 declare module "snabbdom" {
@@ -87,12 +108,18 @@ declare module "snabbdom" {
   export function init(modules: Object, api?: SnabbdomAPI<any>): PatchFunction;
 }
 
+declare module "snabbdom/h" {
+  const h: HyperscriptFn
+  export = h
+}
+
 declare module "snabbdom/vnode" {
-  export default function vnode(sel: string,
-                                data: VNodeData,
-                                children: Array<VNode | string>,
-                                text: string,
-                                elm: any): VNode;
+  const vnode: (sel: string,
+                data: VNodeData,
+                children: Array<VNode | string>,
+                text: string,
+                elm: any) => VNode;
+  export = vnode;
 }
 
 declare module "snabbdom/is" {
@@ -101,48 +128,47 @@ declare module "snabbdom/is" {
 }
 
 declare module "snabbdom/thunk" {
-  export default function thunk(sel: string,
-                                key: string,
-                                render: (...state: Array<any>) => VNode,
-                                ...state: Array<any>): Thunk;
+  const thunk: ThunkFn;
+  export = thunk;
 }
 
 declare module "snabbdom/htmldomapi" {
-  let api: SnabbdomAPI<Element>;
+  const api: SnabbdomAPI<HTMLElement | Text>;
   export = api;
 }
 
 declare module "snabbdom/modules/class" {
-  let ClassModule: Module;
+  const ClassModule: Module;
   export = ClassModule;
 }
 
 declare module "snabbdom/modules/props" {
-  let PropsModule: Module;
+  const PropsModule: Module;
   export = PropsModule;
 }
 
 declare module "snabbdom/modules/attributes" {
-  let AttrsModule: Module;
+  const AttrsModule: Module;
   export = AttrsModule;
 }
 
 declare module "snabbdom/modules/eventlisteners" {
-  let EventsModule: Module;
+  const EventsModule: Module;
   export = EventsModule;
 }
 
 declare module "snabbdom/modules/hero" {
-  let HeroModule: Module;
+  const HeroModule: Module;
   export = HeroModule;
 }
 
 declare module "snabbdom/modules/style" {
-  let StyleModule: Module;
+  const StyleModule: Module;
   export = StyleModule;
 }
 
 declare module "snabbdom/modules/dataset" {
-  let DatasetModule: Module;
+  const DatasetModule: Module;
   export = DatasetModule;
 }
+
